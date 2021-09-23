@@ -23,11 +23,8 @@
 # SOFTWARE.
 
 import os
-from sqlite3.dbapi2 import Connection
 import time
-import sqlite3
-from sqlite3 import Error
-
+import json
 import pylogix
 from pylogix import PLC
 
@@ -37,10 +34,6 @@ from datalayer.variant import Variant
 from app.ab_provider_node import ABnode
 
 value_address_str_1 = "SQLite/terminal-1"
-value_address_str_2 = "SQLite/terminal-2"
-value_address_str_3 = "SQLite/terminal-3"
-value_address_str_4 = "SQLite/terminal-4"
-
 
 def main():
 
@@ -69,9 +62,6 @@ def main():
                 return
 
             provider_node_str_1 = provide_string(provider, value_address_str_1)
-            provider_node_str_2 = provide_string(provider, value_address_str_2)
-            provider_node_str_3 = provide_string(provider, value_address_str_3)
-            provider_node_str_4 = provide_string(provider, value_address_str_4)
 
             print("Start provider")
             provider.start()
@@ -89,22 +79,7 @@ def main():
             result = provider.unregister_node(value_address_str_1)
             print(result)
 
-            print("Unregister provider Node", value_address_str_2, end=" ")
-            result = provider.unregister_node(value_address_str_2)
-            print(result)
-            
-            print("Unregister provider Node", value_address_str_3, end=" ")
-            result = provider.unregister_node(value_address_str_3)
-            print(result)
-            
-            print("Unregister provider Node", value_address_str_4, end=" ")
-            result = provider.unregister_node(value_address_str_4)
-            print(result)
-
             del provider_node_str_1
-            del provider_node_str_2
-            del provider_node_str_3
-            del provider_node_str_4
 
         datalayer_system.stop(True)
 

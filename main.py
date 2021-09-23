@@ -28,13 +28,13 @@ import time
 import sqlite3
 from sqlite3 import Error
 
-#import pylogix
-#from pylogix import PLC
+import pylogix
+from pylogix import PLC
 
 import datalayer
 from datalayer.variant import Variant
 
-from app.sql_provider_node import SQLiteNode
+from app.ab_provider_node import ABnode
 
 value_address_str_1 = "SQLite/terminal-1"
 value_address_str_2 = "SQLite/terminal-2"
@@ -113,7 +113,7 @@ def provide_string(provider: datalayer.provider, name):
     print("Creating string  provider node")
     variantString = Variant()
     variantString.set_string("Enter SQL script here. Use ';' as the last character to suppress result")
-    provider_node_str = SQLiteNode(provider, name, variantString)
+    provider_node_str = ABnode(provider, name, variantString)
     provider_node_str.register_node()
     return provider_node_str
 

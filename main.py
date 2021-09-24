@@ -56,14 +56,8 @@ def main():
         if 'SNAP' in os.environ:
             connectionProvider = "ipc://"
 
-        #simple example to set a variant easily
-        testVariant = Variant()
-        testData = 1
-        testList = ["latestData"]
-        tag = app.utils.ABTag("theAddress", testVariant, testList, 1, "INT")
-        tag.setVariantValue(testData)
-        #app.utils.setVariantValue(testVariant, testData, "STRING")
-        print(tag.data.get_int16())
+        
+
 
         print("Connecting", connectionProvider)
         with datalayer_system.factory().create_provider(connectionProvider) as provider:
@@ -73,9 +67,17 @@ def main():
                 return
 
             my_list = [1, "Hello", 3.4]
-            provider_node_str_1 = provide_string(provider, value_address_str_1, my_list, 1, "SINT")
-
-           
+            #provider_node_str_1 = provide_string(provider, value_address_str_1, my_list, 1, "SINT")
+        
+            #simple example to set a variant easily
+            testData = 1234
+            testList = ["latestData"]
+            tag = app.utils.ABTag(provider, "theAddress", testList, 0, "INT")
+            tag.setVariantValue(testData)
+            print(tag.getVariantValue())
+            tag.updateVariantValue()
+            print(tag.getVariantValue())
+            
 
             print("Start provider")
             provider.start()

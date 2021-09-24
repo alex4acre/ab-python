@@ -58,9 +58,12 @@ def main():
 
         #simple example to set a variant easily
         testVariant = Variant()
-        testData = "cheese"
-        app.utils.setVariantValue(testVariant, testData, "STRING")
-        print(testVariant.get_string())
+        testData = 1
+        testList = ["latestData"]
+        tag = app.utils.ABTag("theAddress", testVariant, testList, 1, "INT")
+        tag.setVariantValue(testData)
+        #app.utils.setVariantValue(testVariant, testData, "STRING")
+        print(tag.data.get_int16())
 
         print("Connecting", connectionProvider)
         with datalayer_system.factory().create_provider(connectionProvider) as provider:

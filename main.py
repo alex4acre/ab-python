@@ -33,6 +33,8 @@ from datalayer.variant import Variant
 
 from app.ab_provider_node import ABnode
 
+import app.utils
+
 value_address_str_1 = "SQLite/terminal-1"
 
 def main():
@@ -54,6 +56,12 @@ def main():
         if 'SNAP' in os.environ:
             connectionProvider = "ipc://"
 
+        #simple example to set a variant easily
+        testVariant = Variant()
+        testData = "cheese"
+        app.utils.setVariantValue(testVariant, testData, "STRING")
+        print(testVariant.get_string())
+
         print("Connecting", connectionProvider)
         with datalayer_system.factory().create_provider(connectionProvider) as provider:
             result = provider.start()
@@ -61,7 +69,10 @@ def main():
                 print("ERROR Starting Data Layer Provider failed with:", result)
                 return
 
-            provider_node_str_1 = provide_string(provider, value_address_str_1)
+            my_list = [1, "Hello", 3.4]
+            provider_node_str_1 = provide_string(provider, value_address_str_1, my_list, 1, "SINT")
+
+           
 
             print("Start provider")
             provider.start()
@@ -83,12 +94,12 @@ def main():
 
         datalayer_system.stop(True)
 
-def provide_string(provider: datalayer.provider, name):
+def provide_string(provider: datalayer.provider, name: str, abTagValues : list, listIndex : int, datatype : str):
     # Create and register simple string provider node
     print("Creating string  provider node")
     variantString = Variant()
     variantString.set_string("Enter SQL script here. Use ';' as the last character to suppress result")
-    provider_node_str = ABnode(provider, name, variantString)
+    provider_node_str = ABnode(provider, name, variantString, abTagValues, listIndex, datatype)
     provider_node_str.register_node()
     return provider_node_str
 

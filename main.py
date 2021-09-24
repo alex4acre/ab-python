@@ -21,7 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import sys
 import os
 import time
 import json
@@ -33,12 +33,28 @@ from datalayer.variant import Variant
 
 from app.ab_provider_node import ABnode
 
-import app.utils
+bPLCPresent = False
 
-value_address_str_1 = "SQLite/terminal-1"
-
+testJson = """{"tag":
+    [
+        {"name":"SinCounter","type":"REAL"},
+        {"name":"Line1_OEE","type":"REAL"},
+        {"name":"mySINReflection_x10","type":"REAL"},
+        {"name":"myLINT","type":"LINT"},
+        {"name":"MyString","type":"STRING"},
+        {"name":"MyControllerBOOL","type":"BOOL"},
+        {"name":"MyControllerBOOL1","type":"BOOL"},
+        {"name":"MyControllerBOOL2","type":"REAL"},
+        {"name":"MyControllerBOOL3","type":"REAL"},
+        {"name":"MyControllerBOOL4","type":"REAL"},
+        {"name":"MyControllerBOOL5","type":"REAL"},
+        {"name":"MyControllerBOOL6","type":"REAL"}
+    ]
+}"""
+#        {"name":"MyControllerReal","type":"REAL"}
+#{"name":"MyControllerBOOL","type":"BOOL"}
 def main():
-
+    sys.settrace
     with datalayer.system.System("") as datalayer_system:
         datalayer_system.start(False)
 
@@ -51,13 +67,22 @@ def main():
         #               192.168.1.1 If you are using a ctrlX CORE or ctrlX CORE virtual with TAP adpater
 
         #connectionProvider = "tcp://boschrexroth:boschrexroth@127.0.0.1:2070"
-        connectionProvider = "tcp://boschrexroth:boschrexroth@192.168.1.1:2070"
+        connectionProvider = "tcp://boschrexroth:boschrexroth@192.168.1.11:2070"
 
         if 'SNAP' in os.environ:
             connectionProvider = "ipc://"
 
         
+        if bPLCPresent: 
+            print("PLC is present")
+            #Load the json from file
+        else:
+            print("PLC is not present")
+            jsonData = json.loads(testJson)
+        
 
+        #the list that contains all of the read data
+        my_list = []
 
         print("Connecting", connectionProvider)
         with datalayer_system.factory().create_provider(connectionProvider) as provider:
@@ -66,24 +91,58 @@ def main():
                 print("ERROR Starting Data Layer Provider failed with:", result)
                 return
 
-            my_list = [1, "Hello", 3.4]
-            #provider_node_str_1 = provide_string(provider, value_address_str_1, my_list, 1, "SINT")
-        
-            #simple example to set a variant easily
-            testData = 1234
-            testList = ["latestData"]
-            tag = app.utils.ABTag(provider, "theAddress", testList, 0, "INT")
-            tag.setVariantValue(testData)
-            print(tag.getVariantValue())
-            tag.updateVariantValue()
-            print(tag.getVariantValue())
-            
+            myVariantList = []
+            myTaglist = []
+            #parse the tag list
+            tagList = jsonData['tag']
+            for idx, tag in enumerate(tagList):
+                print(idx)
+                print(tag['name'])
+                if bPLCPresent:
+                    with PLC("192.168.1.9") as comm:
+                        ret = comm.Read(tag['name'])
+                        my_list.append(ret.Value)
+                else:
+                    data = "testData"        
+                    if tag['type'] == "BOOL":
+                        data = True       
+                    elif tag['type'] == "SINT":
+                        data = -1
+                    elif tag['type'] == "INT":
+                        data = -100
+                    elif tag['type'] == "DINT":
+                        data = -1000
+                    elif tag['type'] == "LINT":
+                        data = -10000
+                    elif tag['type'] == "USINT":
+                        data = 1
+                    elif tag['type'] == "UINT":
+                        data = 10
+                    elif tag['type'] == "UDINT":
+                        data = 100
+                    elif tag['type'] == "LWORD":
+                        data = 1000
+                    elif tag['type'] == "REAL":
+                        data = 1.2345
+                    elif tag['type'] == "LREAL":
+                        data = 123456789.0123
+                    elif tag['type'] == "DWORD":
+                        data = 1000
+                    elif tag['type'] == "STRING":
+                        data = "test data"
+                    print("appended data: " + str(data) + ", Type :" + str(type(data)))
+                    my_list.append(data)      
+                #segmentation faults occur if there are not distinct nodes     
+                myTaglist.append(ABnode(provider, tag['name'], my_list, idx, tag['type']))
+                myTaglist[idx].register_node()            
 
-            print("Start provider")
-            provider.start()
+            #print("Start provider")
+            #provider.start()
             print("Running endless loop...")
-            while provider.is_connected():
+            counter = 0
+            while provider.is_connected() and counter < 6:
                 time.sleep(1.0)  # Seconds
+                counter = counter + 1
 
             print("ERROR Data Layer Provider is disconnected")
 
@@ -91,11 +150,10 @@ def main():
             result = provider.stop()
             print(result)
 
-            print("Unregister provider Node", value_address_str_1, end=" ")
-            result = provider.unregister_node(value_address_str_1)
-            print(result)
-
-            del provider_node_str_1
+            for idx, tag in enumerate(tagList):
+                print("Unregister provider Node", tag['name'], end=" ")
+                result = provider.unregister_node("AB/" +  tag['name'])
+                print(result)
 
         datalayer_system.stop(True)
 
